@@ -1,66 +1,65 @@
-name: Deploy to GitHub Pages
+name: GitHub Pages部署
 
 on:
   push:
     branches:
-      - main # 设置要部署的分支
+      - main
+  workflow_dispatch:
 
+# 设置 GITHUB_TOKEN 的权限
 permissions:
-  contents: write # 添加写入权限
+  contents: read
+  pages: write
+  id-token: write
+
+# 允许一个并发部署
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  # 构建任务
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 检出代码
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: 设置Node环境
         uses: actions/setup-node@v3
         with:
-          node-version: "18"
+          node-version: 18
+          cache: "npm"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          run_install: false
+      - name: 安装依赖
+        run: npm ci
 
-      - name: Get pnpm store directory
-        shell: bash
+      - name: 构建项目
+        run: npm run build
+
+      - name: 设置Pages
+        uses: actions/configure-pages@v3
+
+      - name: 复制CNAME文件
         run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          mkdir -p ./.next/static
+          echo "yeargao.site" > ./public/CNAME
+          cp ./public/CNAME ./.next/
+          ls -la ./.next/
 
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
+      - name: 上传构建结果
+        uses: actions/upload-pages-artifact@v1
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          path: ./.next
 
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: List files in public directory
-        run: ls -la public/
-
-      - name: Build
-        run: pnpm build
-
-      - name: List output directory
-        run: ls -la out/
-
-      - name: Add .nojekyll file
-        run: touch out/.nojekyll
-
-      - name: Copy CNAME file
-        run: cp public/CNAME out/ || echo "CNAME file not found, creating..." && echo "yeargao.site" > out/CNAME
-
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: out # 构建输出目录
-          branch: gh-pages # 部署的目标分支
-          clean: true # 清理旧文件
-          token: ${{ secrets.GITHUB_TOKEN }} # 使用GitHub提供的token
+  # 部署任务
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: 部署到GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
