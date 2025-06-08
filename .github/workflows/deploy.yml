@@ -5,6 +5,9 @@ on:
     branches:
       - main # 设置要部署的分支
 
+permissions:
+  contents: write # 添加写入权限
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -39,11 +42,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: List files in public directory
+        run: ls -la public/
+
       - name: Build
         run: pnpm build
 
+      - name: List output directory
+        run: ls -la out/
+
       - name: Add .nojekyll file
         run: touch out/.nojekyll
+
+      - name: Copy CNAME file
+        run: cp public/CNAME out/ || echo "CNAME file not found, creating..." && echo "yeargao.site" > out/CNAME
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
@@ -51,3 +63,4 @@ jobs:
           folder: out # 构建输出目录
           branch: gh-pages # 部署的目标分支
           clean: true # 清理旧文件
+          token: ${{ secrets.GITHUB_TOKEN }} # 使用GitHub提供的token
