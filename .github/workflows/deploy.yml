@@ -60,15 +60,14 @@ jobs:
 
       - name: 复制CNAME文件
         run: |
-          mkdir -p ./.next/static
           echo "yeargao.site" > ./public/CNAME
-          cp ./public/CNAME ./.next/
-          ls -la ./.next/
+          cp ./public/CNAME ./out/
+          ls -la ./out/
 
       - name: 上传构建结果
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./.next
+          path: ./out
 
   # 部署任务
   deploy:
