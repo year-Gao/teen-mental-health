@@ -1,12 +1,1 @@
-{
-  "/_not-found/page": "app/_not-found/page.js",
-  "/chat/page": "app/chat/page.js",
-  "/community/page": "app/community/page.js",
-  "/page": "app/page.js",
-  "/resources/page": "app/resources/page.js",
-  "/test/page": "app/test/page.js",
-  "/profile/page": "app/profile/page.js",
-  "/register/page": "app/register/page.js",
-  "/login/page": "app/login/page.js",
-  "/test-detail/[id]/page": "app/test-detail/[id]/page.js"
-}
+{}
